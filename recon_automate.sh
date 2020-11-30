@@ -11,14 +11,13 @@ declare -a Level_Domains_buffer
 
 file_organize()
 {	
-	mkdir ./"$source"
-	cat ./crtsh/"$source"_crt.txt | sort -u >>  ./crtsh/"$source"_crt_final.txt
-	cat ./findomain/"$source"_findomain.txt | sort -u >> ./findomain/"$source"_findomain_final.txt
-	cat ./subfinder/"$source"_subfinder.txt | sort -u >>  ./subfinder/"$source"_subfinder_final.txt
-	cat ./buffer/"$source"_buffer.txt | sort -u >>  ./buffer/"$source"_buffer_final.txt
-	cat ./crtsh/"$source"_crt_final.txt ./findomain/"$source"_findomain_final.txt ./subfinder/"$source"_subfinder_final.txt ./buffer/"$source"_buffer_final.txt > ./"$source"/"$source".txt
+	cat ./"$source"/"$source"_crt.txt 2>/dev/null | sort -u >>  ./"$source"/"$source"_crt_final.txt
+	cat ./"$source"/"$source"_findomain.txt 2>/dev/null | sort -u >> ./"$source"/"$source"_findomain_final.txt
+	cat ./"$source"/"$source"_subfinder.txt 2>/dev/null | sort -u >>  ./"$source"/"$source"_subfinder_final.txt
+	cat ./"$source"/"$source"_buffer.txt 2>/dev/null | sort -u >>  ./"$source"/"$source"_buffer_final.txt
+	cat ./"$source"/"$source"_crt_final.txt ./"$source"/"$source"_findomain_final.txt ./"$source"/"$source"_subfinder_final.txt ./"$source"/"$source"_buffer_final.txt  > ./"$source"/"$source".txt
 	cat ./"$source"/"$source".txt | sort -u >> ./"$source"/"$source"_final.txt
-	rm ./crtsh/"$source"_crt.txt ./findomain/"$source"_findomain.txt ./subfinder/"$source"_subfinder.txt ./buffer/"$source"_buffer.txt  ./"$source"/"$source".txt
+	rm ./"$source"/"$source"_crt.txt ./"$source"/"$source"_findomain.txt ./"$source"/"$source"_subfinder.txt ./"$source"/"$source"_buffer.txt   ./"$source"/"$source".txt 2>/dev/null
 }
 Level_Unique_crt()
 {
@@ -58,6 +57,7 @@ Level_Unique_buffer()
        done		
 }
 
+
 Help()
 {
    # Display Help
@@ -73,7 +73,7 @@ while getopts d:s:hv flag
 	    case "${flag}" in
 	        d) diggy=${OPTARG};;
 	        s) source=${OPTARG};;
-	        v) echo "V.0.1"
+	        v) echo "V.0.2"
 	           exit;;
 	        h) Help 
 	           exit;;
@@ -98,15 +98,13 @@ digstring
 
 #------------------> CRTSH RECON
 Level_Domains_crt=($source)
-mkdir ./crtsh
 extract_crt()
 {
 for sdm in ${Level_Domains_crt[@]}
 do
-	echo "PERFORMING LEVEL $1 EXTRACTION ON --------------> $sdm"	
 	for domains in `curl -s https://crt.sh/?Identity=%.$sdm | grep ">*.$sdm" | sed 's/<[/]*[TB][DR]>/\n/g' | grep -vE "<|^[\*]*[\.]*$sdm" | sort -u | awk 'NF'`
 	do
-		echo $domains >> ./crtsh/"$source"_crt.txt
+		echo $domains >> ./"$source"/"$source"_crt.txt
 		for items in `echo $domains | grep -o ${WILD_STRINGS[$1-1]}`
 		do
 			check=$(Level_Unique_crt $items)
@@ -124,7 +122,7 @@ level_crt()
 for (( level=1;level<=$diggy;level++))
 do
 
-	echo "Extracting Level $level"
+	echo -n "$level-->"
 	extract_crt $level
 	unset Level_Domains_crt
 	Level_Domains_crt=${Temporary_Domains_crt[@]}
@@ -136,15 +134,13 @@ done
 
 #------------------> FINDOMAIN RECON
 Level_Domains_find=($source)
-mkdir ./findomain
 extract_findwrap()
 {
 for sdm in ${Level_Domains_find[@]}
 do
-	echo "PERFORMING LEVEL $1 EXTRACTION ON --------------> $sdm"	
 	for domains in `findomain -q -t $sdm 2>/dev/null | sort -u`
 	do
-		echo $domains >> ./findomain/"$source"_findomain.txt
+		echo $domains >> ./"$source"/"$source"_findomain.txt
 		for items in `echo $domains  | grep -o ${WILD_STRINGS[$1-1]}`
 		do
 			check=$(Level_Unique_find $items)
@@ -162,7 +158,7 @@ level_findwrap()
 for (( level=1;level<=$diggy;level++))
 do
 
-	echo "Extracting Level $level"
+	echo -n "$level-->"
 	extract_findwrap $level
 	unset Level_Domains_find
 	Level_Domains_find=${Temporary_Domains_find[@]}
@@ -175,15 +171,13 @@ done
 
 #------------------> SUBFINDER RECON
 Level_Domains_sub=($source)
-mkdir ./subfinder
 extract_subfinder()
 {
 for sdm in ${Level_Domains_sub[@]}
 do
-	echo "PERFORMING LEVEL $1 EXTRACTION ON --------------> $sdm"	
 	for domains in `subfinder -silent -d $sdm`
 	do
-		echo $domains >> ./subfinder/"$source"_subfinder.txt
+		echo $domains >> ./"$source"/"$source"_subfinder.txt
 		for items in `echo $domains | grep -o ${WILD_STRINGS[$1-1]}`
 		do
 			check=$(Level_Unique_sub $items)
@@ -201,7 +195,7 @@ level_subfinder()
 for (( level=1;level<=$diggy;level++))
 do
 
-	echo "Extracting Level $level"
+	echo -n "$level-->"
 	extract_subfinder $level
 	unset Level_Domains_sub
 	Level_Domains_sub=${Temporary_Domains_sub[@]}
@@ -213,15 +207,13 @@ done
 
 #------------------> Buffer Over Run RECON
 Level_Domains_buffer=($source)
-mkdir ./buffer
 extract_buffer()
 {
 for sdm in ${Level_Domains_buffer[@]}
 do
-	echo "PERFORMING LEVEL $1 EXTRACTION ON --------------> $sdm"	
-	for domains in `curl -s https://tls.bufferover.run/dns?q=$sdm | jq .Results[] | cut -d ',' -f 3 | sed 's/*//g' | sed 's/\"//g' | sort -u `
+	for domains in `curl -s https://tls.bufferover.run/dns?q=$sdm | jq .Results[] 2>/dev/null | cut -d ',' -f 3 | sed 's/*//g' | sed 's/\"//g' | sort -u `
 	do
-		echo $domains >> ./buffer/"$source"_buffer.txt
+		echo $domains >> ./"$source"/"$source"_buffer.txt
 		for items in `echo $domains | grep -o ${WILD_STRINGS[$1-1]}`
 		do
 			check=$(Level_Unique_buffer $items)
@@ -238,7 +230,7 @@ level_buffer()
 for (( level=1;level<=$diggy;level++))
 do
 
-	echo "Extracting Level $level"
+	echo -n "$level-->"
 	extract_buffer $level
 	unset Level_Domains_buffer
 	Level_Domains_buffer=${Temporary_Domains_buffer[@]}
@@ -247,13 +239,25 @@ done
 }
 ###################################################################################################################################################################
 
+
+main()
+{
+mkdir ./"$source"
+echo "CERTSH EXTRACTION"
 level_crt
+echo "end"
+echo "FINDWRAP EXTRACTION​"
 level_findwrap
+echo "end"
+echo "SUBFINDER EXTRACTION"
 level_subfinder
+echo "end"
+echo "BUFFER EXTRACTION"
 level_buffer
+echo "end"
 file_organize
-
-
+}
+main
 
 
 
