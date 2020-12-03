@@ -1,0 +1,34 @@
+Help()
+{
+   # Display Help
+   echo "Syntax: USE ARGS [-d|-h|-s|-v]"
+   echo "options:"
+   echo "h:--> Print this Help."
+   echo "s:--> Specify GIT ."
+}
+
+while getopts d:s:hv flag
+	do
+	    case "${flag}" in
+	        s) source=${OPTARG};;
+	        v) echo "V.0.2"
+	           exit;;
+	        h) Help 
+	           exit;;
+	    esac
+	done
+
+git_recon()
+{
+	mkdir -p GIT_RECON/TRUFFLEHOG 2>/dev/null
+	for repo in `curl -s "https://api.github.com/users/$1/repos" | grep -o 'git@[^"]*' | cut -c 16-`
+		do
+			echo "$repo"
+			str=`echo "$repo" | sed 's/\//-/g'`
+			trufflehog --regex --entropy=False https://github.com/$repo | sed 's/[^[:print:]]//g' >> ./GIT_RECON/TRUFFLEHOG/"$str".txt
+		done
+}
+
+git_recon $source
+
+
