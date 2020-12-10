@@ -91,7 +91,7 @@ for sdm in ${Level_Domains[@]}
 do
 	for domains in `eval $(Query_Gen $2 $sdm)`
 	do
-		echo $domains >> ./"$source"/"$source"_"$2".txt
+		echo $domains | sed s/www\.//g >> ./"$source"/"$source"_"$2".txt
 		for items in `echo $domains | grep -o ${WILD_STRINGS[$1-1]}`
 		do
 			check=$(Level_Unique $items)
