@@ -91,8 +91,8 @@ for sdm in ${Level_Domains[@]}
 do
 	for domains in `eval $(Query_Gen $2 $sdm)`
 	do
-		echo $domains | sed s/www\.//g >> ./"$source"/"$source"_"$2".txt
-		for items in `echo $domains | grep -o ${WILD_STRINGS[$1-1]}`
+		echo $domains | sed 's/www\.//g' | sed 's/^\.//g' | sed 's/^*\.//g'  >> ./"$source"/"$source"_"$2".txt
+		for items in `echo $domains  | grep -o ${WILD_STRINGS[$1-1]} | sed 's/www\.//g' | sed 's/^\.//g' | sed 's/^*\.//g'`
 		do
 			check=$(Level_Unique $items)
 			if [[ $check != 1 ]] ; then
@@ -138,6 +138,7 @@ Query
 file_merge "CRTSH" "FINDOMAIN" "BUFFER" "SUBFINDER"
 
 ###################################################################################################################################################################
+
 
 
 

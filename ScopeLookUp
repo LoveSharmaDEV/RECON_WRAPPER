@@ -1,0 +1,8 @@
+while read -r line; do
+	if [[ ! -z $line ]]
+	then
+		echo $line
+		recon_automate -d $1 -s $line
+	fi
+
+done < $2
