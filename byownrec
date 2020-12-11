@@ -1,4 +1,28 @@
 ###################################################################################################################################################################
+
+if test -t 1; then
+    ncolors=$(tput colors)
+
+    if test -n "$ncolors" && test $ncolors -ge 8; then
+        bold="$(tput bold)"
+        underline="$(tput smul)"
+        standout="$(tput smso)"
+        standoutend="$(tput rmso)"
+        blink="$(tput blink)"
+        normal="$(tput sgr0)"
+        black="$(tput setaf 0)"
+        red="$(tput setaf 1)"
+        green="$(tput setaf 2)"
+        yellow="$(tput setaf 3)"
+        blue="$(tput setaf 4)"
+        magenta="$(tput setaf 5)"
+        cyan="$(tput setaf 6)"
+        white="$(tput setaf 7)"
+    fi
+fi
+
+###################################################################################################################################################################
+
 declare -a WILD_STRINGS
 declare -a Temporary_Domains
 declare -a Level_Domains
@@ -35,13 +59,15 @@ Help()
    echo "d:--> Specify Sub-Domain Depth."
    echo "h:--> Print this Help."
    echo "s:--> Specify Root Domain."
+   echo "l:--> Specify Root File."
 }
 
-while getopts d:s:hv flag
+while getopts d:s:l:hv flag
 	do
 	    case "${flag}" in
 	        d) diggy=${OPTARG};;
 	        s) source=${OPTARG};;
+	        l) list=${OPTARG};;
 	        v) echo "V.0.2"
 	           exit;;
 	        h) Help 
@@ -50,7 +76,7 @@ while getopts d:s:hv flag
 	done
 digstring()
 {
-
+unset WILD_STRINGS
 for (( i = 1; i <= $diggy; i++ ))
 do
 	wildcard="[^.*$]*\."
@@ -59,10 +85,10 @@ do
 	do
   		str+="${wildcard}"
 	done
-	WILD_STRINGS[$i-1]="$str$source"
+	WILD_STRINGS[$i-1]="$str$1"
 done
 }
-digstring
+
 
 Query_Gen()
 {
@@ -91,9 +117,13 @@ for sdm in ${Level_Domains[@]}
 do
 	for domains in `eval $(Query_Gen $2 $sdm)`
 	do
-		echo $domains | sed 's/www\.//g' | sed 's/^\.//g' | sed 's/^*\.//g'  >> ./"$source"/"$source"_"$2".txt
+		eval `echo $domains | sed 's/www\.//g' | sed 's/^\.//g' | sed 's/^*\.//g'  >> ./"$source"/"$source"_"$2".txt`
 		for items in `echo $domains  | grep -o ${WILD_STRINGS[$1-1]} | sed 's/www\.//g' | sed 's/^\.//g' | sed 's/^*\.//g'`
 		do
+			tput sc
+			echo -ne "\n${standout}${green}$items${normal}${standoutend}"
+			sleep 0.03
+			tput rc;tput ed
 			check=$(Level_Unique $items)
 			if [[ $check != 1 ]] ; then
 				Temporary_Domains+=($items)
@@ -107,13 +137,14 @@ level()
 {
 for (( level=1;level<=$diggy;level++))
 do
-
-	echo -n "$level-->"
+	echo -ne "${normal}${bold}${magenta}${standout}$level-->${standoutend}${normal}"
 	extract $level $1
 	unset Level_Domains
 	Level_Domains=${Temporary_Domains[@]}
 	unset Temporary_Domains
 done
+
+echo -e "${normal}${bold}${magenta}${standout}end${standoutend}${normal}\n"
 }
 
 ###################################################################################################################################################################
@@ -125,19 +156,61 @@ Query()
         
         for tool in ${TOOLS[@]}
         do
-        	echo "$tool EXTRACTION"
+        	echo -e "${normal}${bold}${cyan}${standout}$tool EXTRACTION${standoutend}${normal}"
         	Level_Domains=($source)
         	level "$tool" 
-        	echo "end"
         	unset Level_Domains
         	unset Temporary_Domains
         	file_organize "$tool"
         done
 }
-Query
-file_merge "CRTSH" "FINDOMAIN" "BUFFER" "SUBFINDER"
+
 
 ###################################################################################################################################################################
+
+# INCLUDING LIST FLAG (UGLY IF/ELSE)
+
+if [[ -z $source ]] && [[ -z $list ]];
+then
+	echo "${red}flags not specified${normal}"
+elif [[ ! -z $source ]] && [[ ! -z $list ]];
+then
+	echo "${red}target not clear:--> (use -h)${normal}"
+elif  [[ ! -z $source ]] && [[  -z $list ]];
+then
+	clear
+	echo -e "${normal}${bold}${red}${standout}$source${normal}${cyan}\n"	
+	digstring $source
+	Query
+	file_merge "CRTSH" "FINDOMAIN" "BUFFER" "SUBFINDER"
+elif [[ -z $source ]] && [[ ! -z $list ]];
+then
+	while read -r line; do
+	if [[ ! -z $line ]]
+	then
+		clear
+		echo -e "${normal}${bold}${red}${standout}$line${standoutend}${normal}${cyan}\n"
+		digstring $line
+		source=$line
+		Query 
+		file_merge "CRTSH" "FINDOMAIN" "BUFFER" "SUBFINDER"
+		clear
+	fi
+
+	done < $list
+else
+	echo "${red}code flaw${normal}"
+fi
+
+###################################################################################################################################################################
+
+
+
+
+
+
+
+
 
 
 
