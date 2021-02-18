@@ -1,3 +1,8 @@
+#!/bin/bash
+
+standout="$(tput smso)"
+standoutend="$(tput rmso)"
+
 Help()
 {
    # Display Help
@@ -20,12 +25,24 @@ while getopts d:s:hv flag
 
 git_recon()
 {
-	mkdir -p GIT_RECON/TRUFFLEHOG 2>/dev/null
-	for repo in `curl -s "https://api.github.com/users/$1/repos" | grep -o 'git@[^"]*' | cut -c 16-`
+	mkdir -p GIT_RECON/TRUFFLEHOG/$1 2>/dev/null
+	
+	for repo in `curl -s "https://api.github.com/users/$1/repos" \
+	| grep -o 'git@[^"]*' \
+	| cut -c 16-`
+	
 		do
-			echo "$repo"
-			str=`echo "$repo" | sed 's/\//-/g'`
-			trufflehog --regex --entropy=False https://github.com/$repo | sed 's/[^[:print:]]//g' >> ./GIT_RECON/TRUFFLEHOG/"$str".txt
+			echo -e "${standout}$repo${standoutend}\n"
+			
+			str=`echo "$repo" \
+			| sed 's/\//-/g'`
+			
+			trufflehog \
+			--regex \
+			--entropy=False \
+			https://github.com/$repo \
+			| tee GIT_RECON/TRUFFLEHOG/$1/"$str".txt
+			
 		done
 }
 
