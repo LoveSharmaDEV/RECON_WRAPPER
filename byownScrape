@@ -212,15 +212,7 @@ else
 	echo "${red}code flaw${normal}"
 fi
 
-###################################################################################################################################################################
 
-# ----> TO:DO 1 --> PERFORMING AGGRESIVE SCANNING * 
-# ----> TO:DO 2 --> ORGANIZE IN FILE STRUCTURE *
-# ----> TO:DO 3 --> CODE-REUSABLE AND EDITABLE *
-# ----> TO:DO 4 --> FILTERING LIVE URLS
-# ----> TO:DO 5 --> PERFORMING PORT SCANS
-# ----> TO:DO 6 --> PERFORMING SCREENSHORTS
-# ----> TO:DO 7 --> AUTOMATING SUB-DOMAIN TAKEOVERS
 
 
 
